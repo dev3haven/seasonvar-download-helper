@@ -1,8 +1,10 @@
 // ==UserScript==
 // @name         Seasonvar Download Helper
+// @name:en Seasonvar Download Helper
 // @namespace    http://tampermonkey.net/
 // @version      1.3
 // @description  Добавляет кнопки для скачивания видео и плейлиста с невидимым переключением
+// @description:en  Adds download file and playlist buttons
 // @author       Your Name
 // @match        *://seasonvar.ru/*
 // @grant        GM.cookie
