@@ -2,7 +2,7 @@
 // @name         Seasonvar Download Helper
 // @name:en Seasonvar Download Helper
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  Добавляет кнопки для скачивания видео и плейлиста с невидимым переключением
 // @description:en  Adds download file and playlist buttons
 // @author       Your Name
@@ -106,8 +106,6 @@
             }
 
             const originalDisplay = playerContainer.style.display;
-            const originalMuted = video.muted;
-            const originalPaused = video.paused;
 
             playerContainer.style.display = 'none';
             video.muted = true;
@@ -149,9 +147,6 @@
                 logWindow.document.body.innerHTML += `<br>Критическая ошибка: ${e.message}`;
             } finally {
                 playerContainer.style.display = originalDisplay;
-                video.muted = originalMuted;
-                if (!originalPaused) video.play().catch(() => {
-                });
             }
         });
     };
