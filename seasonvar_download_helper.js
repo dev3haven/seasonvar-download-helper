@@ -2,8 +2,8 @@
 // @name         Seasonvar Download Helper
 // @name:en Seasonvar Download Helper
 // @namespace    http://tampermonkey.net/
-// @version      1.9
-// @description  Добавляет кнопки для скачивания видео и плейлиста с невидимым переключением
+// @version      1.10
+// @description  Добавляет кнопки для скачивания видео и получение прямых ссылок на скачивание файлов плейлиста
 // @description:en  Adds download file and playlist buttons
 // @author       Your Name
 // @match        *://seasonvar.ru/*
