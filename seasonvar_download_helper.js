@@ -2,7 +2,7 @@
 // @name         Seasonvar Download Helper
 // @name:en Seasonvar Download Helper
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Добавляет кнопки для скачивания видео и плейлиста с невидимым переключением
 // @description:en  Adds download file and playlist buttons
 // @author       Your Name
@@ -69,7 +69,7 @@
         const cookies = cookieList.map(c => `${c.name}=${c.value}`).join('; ');
 
         const commands = urls.map(url =>
-            `aria2 -x4 -s4 -c "${url}" --header="Referer: ${location.href}" --header="Cookie: ${cookies}"`
+            `aria2 -j1 -x4 -s4 -c "${url}" --header="Referer: ${location.href}" --header="Cookie: ${cookies}"`
         );
         const oneCommand = 'aria2 -x4 -s4 -c '
             + ` --header="Referer: ${location.href}" --header="Cookie: ${cookies}" -Z `
