@@ -2,7 +2,7 @@
 // @name         Seasonvar Download Helper
 // @name:en Seasonvar Download Helper
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Добавляет кнопки для скачивания видео и плейлиста с невидимым переключением
 // @description:en  Adds download file and playlist buttons
 // @author       Your Name
@@ -68,11 +68,10 @@
         const cookieList = await GM.cookie.list({domain: 'seasonvar.ru'});
         const cookies = cookieList.map(c => `${c.name}=${c.value}`).join('; ');
 
-        const commands = urls.map(url =>
-            `aria2 -j1 -x4 -s4 -c -m0 "${url}" --header="Referer: ${location.href}" --header="Cookie: ${cookies}"`
-        );
-        const oneCommand = 'aria2 -j1 -x4 -s4 -c -m0 '
-            + ` --header="Referer: ${location.href}" --header="Cookie: ${cookies}" -Z `
+        const commandPrefix = 'aria2 -j1 -x4 -s4 -c -m0';
+        const commands = urls
+            .map(url => `${commandPrefix} "${url}" --header="Referer: ${location.href}" --header="Cookie: ${cookies}"`);
+        const oneCommand = `${commandPrefix} --header="Referer: ${location.href}" --header="Cookie: ${cookies}" -Z `
             + urls.join(' ');
 
         const winBatch = [
