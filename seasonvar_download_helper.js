@@ -2,7 +2,7 @@
 // @name         Seasonvar Download Helper
 // @name:en Seasonvar Download Helper
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Добавляет кнопки для скачивания видео и плейлиста с невидимым переключением
 // @description:en  Adds download file and playlist buttons
 // @author       Your Name
@@ -71,36 +71,10 @@
         const commandPrefix = 'aria2 -j1 -x4 -s4 -c -m0';
         const commands = urls
             .map(url => `${commandPrefix} "${url}" --header="Referer: ${location.href}" --header="Cookie: ${cookies}"`);
-        const oneCommand = `${commandPrefix} --header="Referer: ${location.href}" --header="Cookie: ${cookies}" -Z `
-            + urls.join(' ');
+        const batchOneCommand
+            = `${commandPrefix} --header="Referer: ${location.href}" --header="Cookie: ${cookies}" -Z ${urls.join(' ')}`;
 
-        const winBatch = [
-            '@echo off',
-            'chcp 65001',
-            ...commands.map(c => `start /B cmd /c "${c}"`),
-            'exit'
-        ].join('\n');
-
-        const linuxScript = [
-            '#!/bin/bash',
-            ...commands.map(c => `${c} &`),
-            'exit 0'
-        ].join('\n');
-
-        const winBatchOneCommand = [
-            '@echo off',
-            'chcp 65001',
-            oneCommand,
-            'exit'
-        ].join('\n');
-
-        const linuxBatchOneCommand = [
-            '#!/bin/bash',
-            oneCommand,
-            'exit 0'
-        ].join('\n');
-
-        return {commands, winBatch, linuxScript, winBatchOneCommand, linuxBatchOneCommand};
+        return {commands, batchOneCommand};
     };
 
     const createPlaylistDownloader = () => {
@@ -111,6 +85,17 @@
 
         btn.addEventListener('click', async () => {
             logWindow = window.open('', '_blank');
+            logWindow.document.write(`
+                <script>
+                    function copyTxt(id) {
+                        const textarea = document.getElementById(id);
+                        textarea.value = textarea.value.trim();
+                        textarea.focus();
+                        textarea.select();
+                        document.execCommand('copy');
+                    }
+                </script>
+            `);
             logWindow.document.write('<pre>Инициализация скачивания плейлиста...</pre>');
 
             const playerContainer = document.querySelector('#oframehtmlPlayer');
@@ -151,25 +136,15 @@
                     }
                 }
 
-                const {
-                    commands, winBatch, linuxScript,
-                    winBatchOneCommand, linuxBatchOneCommand
-                } = await generateAriaCommands(results);
+                const {commands, batchOneCommand} = await generateAriaCommands(results);
                 logWindow.document.body.innerHTML = `
-                    <pre>${commands.join('<br>')}
-
-                    === Windows batch ===<br>
-                    ${winBatch.replace(/\n/g, '<br>')}
-                    
-                    === Windows batch by one command ===<br>
-                    ${winBatchOneCommand.replace(/\n/g, '<br>')}
-
-                    === Linux script ===<br>
-                    ${linuxScript.replace(/\n/g, '<br>')}
-                    
-                    === Linux script by one command ===<br>
-                    ${linuxBatchOneCommand.replace(/\n/g, '<br>')}
-                    </pre>`;
+                    <div>
+                        <button id="copy-one-cmd" onclick="copyTxt('copy-one-txt')">copy</button>
+                    </div>
+                    <textarea id="copy-one-txt" cols="30" rows="10">
+                        ${batchOneCommand.trim()}
+                    </textarea>
+                    <pre>${commands.join('<br>')}</pre>`;
             } catch (e) {
                 logWindow.document.body.innerHTML += `<br>Критическая ошибка: ${e.message}`;
             } finally {
