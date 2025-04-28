@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Seasonvar Download Helper
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Добавляет кнопки для скачивания видео и плейлиста с невидимым переключением
 // @author       Your Name
 // @match        *://seasonvar.ru/*
@@ -63,12 +63,15 @@
     };
 
     const generateAriaCommands = async (urls) => {
-        const cookieList = await GM.cookie.list({ domain: 'seasonvar.ru' });
+        const cookieList = await GM.cookie.list({domain: 'seasonvar.ru'});
         const cookies = cookieList.map(c => `${c.name}=${c.value}`).join('; ');
 
         const commands = urls.map(url =>
-            `aria2c -x4 -s4 "${url}" --header="Referer: ${location.href}" --header="Cookie: ${cookies}"`
+            `aria2 -x4 -s4 -c "${url}" --header="Referer: ${location.href}" --header="Cookie: ${cookies}"`
         );
+        const oneCommand = 'aria2 -x4 -s4 -c '
+            + ` --header="Referer: ${location.href}" --header="Cookie: ${cookies}" -Z `
+            + urls.join(' ');
 
         const winBatch = [
             '@echo off',
@@ -79,11 +82,24 @@
 
         const linuxScript = [
             '#!/bin/bash',
-            ...commands.map(c => `nohup ${c} >/dev/null 2>&1 &`),
+            ...commands.map(c => `${c} &`),
             'exit 0'
         ].join('\n');
 
-        return {commands, winBatch, linuxScript};
+        const winBatchOneCommand = [
+            '@echo off',
+            'chcp 65001',
+            oneCommand,
+            'exit'
+        ].join('\n');
+
+        const linuxBatchOneCommand = [
+            '#!/bin/bash',
+            oneCommand,
+            'exit 0'
+        ].join('\n');
+
+        return {commands, winBatch, linuxScript, winBatchOneCommand, linuxBatchOneCommand};
     };
 
     const createPlaylistDownloader = () => {
@@ -117,7 +133,7 @@
 
                 for (let i = 0; i < items.length; i++) {
                     try {
-                        logWindow.document.body.innerHTML += `<br>Обрабатываю элемент ${i+1}/${items.length}`;
+                        logWindow.document.body.innerHTML += `<br>Обрабатываю элемент ${i + 1}/${items.length}`;
                         const src = await Promise.race([
                             switchPlaylistItem(i),
                             new Promise((_, r) => setTimeout(() => r(null), 25000))
@@ -125,31 +141,41 @@
 
                         if (src) {
                             results.push(src);
-                            logWindow.document.body.innerHTML += `<br>[${i+1}/${items.length}] Получена ссылка: ${src}`;
+                            logWindow.document.body.innerHTML += `<br>[${i + 1}/${items.length}] Получена ссылка: ${src}`;
                         }
                         restoreOriginalState();
                         await new Promise(r => setTimeout(r, 4000));
-                    } catch(e) {
+                    } catch (e) {
                         logWindow.document.body.innerHTML += `<br>Ошибка: ${e.message}`;
                     }
                 }
 
-                const {commands, winBatch, linuxScript} = await generateAriaCommands(results);
+                const {
+                    commands, winBatch, linuxScript,
+                    winBatchOneCommand, linuxBatchOneCommand
+                } = await generateAriaCommands(results);
                 logWindow.document.body.innerHTML = `
                     <pre>${commands.join('<br>')}
 
                     === Windows batch ===<br>
                     ${winBatch.replace(/\n/g, '<br>')}
+                    
+                    === Windows batch by one command ===<br>
+                    ${winBatchOneCommand.replace(/\n/g, '<br>')}
 
                     === Linux script ===<br>
                     ${linuxScript.replace(/\n/g, '<br>')}
+                    
+                    === Linux script by one command ===<br>
+                    ${linuxBatchOneCommand.replace(/\n/g, '<br>')}
                     </pre>`;
-            } catch(e) {
+            } catch (e) {
                 logWindow.document.body.innerHTML += `<br>Критическая ошибка: ${e.message}`;
             } finally {
                 playerContainer.style.display = originalDisplay;
                 video.muted = originalMuted;
-                if (!originalPaused) video.play().catch(() => {});
+                if (!originalPaused) video.play().catch(() => {
+                });
             }
         });
     };
