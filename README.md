@@ -1,0 +1,1 @@
+# seasonvar-download-helper
